@@ -1,19 +1,23 @@
-region             = "us-east-1"
-organization_name  = "beholder"
-environment        = "prd"
+region            = "us-east-1"
+organization_name = "beholder"
+environment       = "prd"
 common_tags = {
-  "Name"    = "SDLF"
-  "Projeto" = "AWS with Terraform"
-  "Fase"    = "CICD"
+  "Name" = "Migration"
 }
-mysql_username = "sancho"
-mysql_password = "qwerty123"
+###################### RDS MySql ######################
+engine_version = "8.0.35"
+instance_class = "db.t4g.micro"
+db_name_rds    = "retail"
+username_rds   = "admin"
+password_rds   = "calipso1234"
+###################### EC2 MySql ######################
+username_ec2  = "virtualadmin"
+password_ec2  = "calipso1234"
+port_ec2      = "3306"
+db_name_ec2   = "retail"
+key_name      = "key-pair-linux-sancho"
+ami           = "ami-0a0e5d9c7acc336f1" # AMI do ubuntu
+instance_type = "t2.micro"
+
 vpc_id = "vpc-039ffaa0cf5d4c063"
-dump_files = [
-    "./scripts_dump/banco_categorias.sql",
-    "./scripts_dump/banco_clientes.sql",
-    "./scripts_dump/banco_locais.sql",
-    "./scripts_dump/banco_lojas.sql",
-    "./scripts_dump/banco_pedidos.sql",
-    "./scripts_dump/banco_produtos.sql"
-  ]
+

@@ -30,14 +30,50 @@ variable "vpc_id" {
   description = "ID vpc"
 }
 
-variable "mysql_username" {
-  type        = string
+variable "engine_version" {
+  type = string
 }
 
-variable "mysql_password" {
-  type        = string
+variable "instance_class" {
+  type = string
 }
 
-variable "dump_files" {
-  type = list(string)
+variable "db_name_rds" {
+  type = string
 }
+
+variable "username_rds" {
+  type = string
+}
+
+variable "password_rds" {
+  type = string
+}
+
+variable "username_ec2" {
+  type = string
+}
+
+variable "password_ec2" {
+  type = string
+}
+
+variable "port_ec2" {
+  type = string
+}
+
+variable "db_name_ec2" {
+  type = string
+}
+
+variable "key_name" {
+  type = string
+}
+
+variable "ami" {
+  type = string
+}
+variable "instance_type" {
+  type = string
+}
+
