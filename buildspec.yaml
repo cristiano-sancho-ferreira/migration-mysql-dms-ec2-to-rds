@@ -13,8 +13,8 @@ phases:
 
   pre_build:
     commands:
-      - #cd sdlf-stagea-infra
-      #- terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/sdlf-infra/terraform.tfstate"
+      #- cd sdlf-stagea-infra
+      - terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/streams/terraform.tfstate"
       #- cd sdlf-stageb-iceberg
       #- terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/sdlf-iceberg/terraform.tfstate"
       #- cd sdlf-stagec-redshift
@@ -24,11 +24,11 @@ phases:
     commands:
       - "pwd"
       - terraform fmt --recursive
-      - terraform apply -auto-approve -var-file="./_variables/prd.tfvars"
+      - terraform $TF_COMMAND -auto-approve -var-file="./_variables/prd.tfvars"
       #- terraform destroy -auto-approve -var-file="./_variables/prd.tfvars"
       
   post_build:
     commands:
-      - echo Terraform completed on `date`
+      - echo Terraform $TF_COMMAND completed on `date`
 
       
