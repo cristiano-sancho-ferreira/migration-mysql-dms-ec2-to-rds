@@ -99,7 +99,7 @@ resource "aws_instance" "ec2_mysql" {
   instance_type   = var.instance_type
   key_name        = var.key_name
   security_groups = [aws_security_group.ec2_sg.name]
-  subnet_id       = var.subnet_ids
+  #subnet_id       = var.subnet_ids
 
   user_data = <<-EOF
               #!/bin/bash
