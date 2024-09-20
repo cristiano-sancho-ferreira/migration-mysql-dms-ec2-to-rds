@@ -16,19 +16,21 @@ data "aws_iam_policy_document" "dms_assume_role" {
 }
 
 resource "aws_iam_role" "dms_role" {
-  name               = "dms-s3-access-role"
+  name               = "dms-mysql-s3-access-role"
   assume_role_policy = data.aws_iam_policy_document.dms_assume_role.json
 }
 
 resource "aws_iam_policy" "dms_policy" {
-  name        = "dms-s3-access-Policy"
+  name        = "dms-mysql-s3-access-Policy"
   description = "Allow DMS to put objects in S3 bucket"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Action = [
-        "s3:PutObject",
-        "s3:ListBucket"
+          "s3:PutObject",
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:DeleteObject"
       ]
       Effect = "Allow"
       Resource = [
@@ -45,13 +47,13 @@ resource "aws_iam_role_policy_attachment" "dms_role_policy_attach" {
 }
 
 resource "aws_s3_bucket" "dms_bucket" {
-  bucket        = "dms-${data.aws_caller_identity.current.account_id}"
+  bucket        = "dms-mysql-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 }
 
 
 resource "aws_dms_replication_instance" "dms_instance" {
-  replication_instance_id    = "dms-replication-instance"
+  replication_instance_id    = "dms-mysql-replication-instance"
   replication_instance_class = "dms.t2.micro"
   engine_version             = "3.5.2"
   multi_az                   = false
@@ -69,7 +71,7 @@ resource "aws_dms_replication_instance" "dms_instance" {
 ###################### EC2 MySql ######################
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "ec2-mysql-sg"
+  name        = "dms-mysql-ec2-sg"
   description = "Allow MySQL access"
 
   ingress {
@@ -117,7 +119,7 @@ resource "aws_instance" "ec2_mysql" {
               EOF
 
   tags = {
-    Name = "ec2-mysql"
+    Name = "dms-mysql-ec2"
   }
 }
 
@@ -127,60 +129,61 @@ resource "aws_instance" "ec2_mysql" {
 #######################################################
 ###################### RDS MySql ######################
 
-resource "aws_db_subnet_group" "mysql_subnet_group" {
-  name       = "mysql-subnet-group"
-  subnet_ids = [var.subnet_ids, "subnet-09485a295a6a6d9c4"] # Substitua pelos IDs de subnets corretos
+# resource "aws_db_subnet_group" "mysql_subnet_group" {
+#   name       = "mysql-subnet-group"
+#   subnet_ids = [var.subnet_ids, "subnet-09485a295a6a6d9c4"] # Substitua pelos IDs de subnets corretos
 
-  tags = var.common_tags
-}
+#   tags = var.common_tags
+#   depends_on = [ aws_db_instance.mysql ]
+# }
 
-resource "aws_security_group" "mysql_sg" {
-  name        = "dms-mysql-sg"
-  description = "Allow MySQL access"
-  vpc_id      = var.vpc_id
-  ingress {
-    description = "MySQL inbound"
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Ajuste conforme necessário
-  }
+# resource "aws_security_group" "mysql_sg" {
+#   name        = "dms-mysql-sg"
+#   description = "Allow MySQL access"
+#   vpc_id      = var.vpc_id
+#   ingress {
+#     description = "MySQL inbound"
+#     from_port   = 3306
+#     to_port     = 3306
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"] # Ajuste conforme necessário
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = var.common_tags
-}
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#   tags = var.common_tags
+# }
 
-resource "aws_db_instance" "mysql" {
-  allocated_storage      = 20
-  identifier             = "mysql-instance"
-  engine                 = "mysql"
-  engine_version         = var.engine_version
-  instance_class         = var.instance_class
-  db_name                = var.db_name_rds
-  username               = var.username_rds
-  password               = var.password_rds
-  db_subnet_group_name   = aws_db_subnet_group.mysql_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.mysql_sg.id]
-  skip_final_snapshot    = true
-  publicly_accessible    = true
-  multi_az               = false
-  network_type           = "IPV4"
-  availability_zone          = "us-east-1a"
+# resource "aws_db_instance" "mysql" {
+#   allocated_storage      = 20
+#   identifier             = "dms-mysql-instance"
+#   engine                 = "mysql"
+#   engine_version         = var.engine_version
+#   instance_class         = var.instance_class
+#   db_name                = var.db_name_rds
+#   username               = var.username_rds
+#   password               = var.password_rds
+#   # db_subnet_group_name   = aws_db_subnet_group.mysql_subnet_group.name
+#   vpc_security_group_ids = [aws_security_group.mysql_sg.id]
+#   skip_final_snapshot    = true
+#   publicly_accessible    = true
+#   multi_az               = false
+#   network_type           = "IPV4"
+#   availability_zone      = "us-east-1a"
 
-  tags = var.common_tags
-}
+#   tags = var.common_tags
+# }
 
 
 #######################################################
 #################### DMS Endpoint #####################
 
 resource "aws_dms_endpoint" "mysql_source" {
-  endpoint_id   = "ec2-mysql-source-endpoint"
+  endpoint_id   = "dms-mysql-source-ec2"
   endpoint_type = "source"
   engine_name   = "mysql"
   username      = var.username_ec2
@@ -191,51 +194,43 @@ resource "aws_dms_endpoint" "mysql_source" {
   ssl_mode      = "none"
 }
 
-resource "aws_dms_endpoint" "mysql_target" {
-  endpoint_id   = "rds-mysql-target-endpoint"
-  endpoint_type = "target"
-  engine_name   = "mysql"
-  username      = aws_db_instance.mysql.username
-  password      = aws_db_instance.mysql.password
-  server_name   = aws_db_instance.mysql.endpoint
-  port          = aws_db_instance.mysql.port
-  database_name = aws_db_instance.mysql.db_name
-  ssl_mode      = "none"
-}
+# resource "aws_dms_endpoint" "mysql_target" {
+#   endpoint_id   = "dms-mysql-target-rds"
+#   endpoint_type = "target"
+#   engine_name   = "mysql"
+#   username      = var.username_rds
+#   password      = var.password_rds
+#   server_name   = aws_db_instance.mysql.address 
+#   port          = aws_db_instance.mysql.port     # Porta correta do RDS
+#   database_name = aws_db_instance.mysql.db_name
+#   ssl_mode      = "none"
+# }
+
+# resource "aws_dms_s3_endpoint" "s3_target" {
+#   endpoint_id             = "dms-mysql-target-s3"
+#   endpoint_type           = "target"
+#   bucket_name             = aws_s3_bucket.dms_bucket.id
+#   service_access_role_arn = aws_iam_role.dms_role.arn
+
+#   csv_delimiter                               = ";"
+  
+#   ssl_mode      = "none"
+
+# }
 
 
+#######################################################
+############### DMS Replication Task ##################
 
 resource "aws_dms_replication_task" "dms_task" {
-  replication_task_id      = "mysql-to-s3"
-  migration_type           = "cdc" # CDC for streaming
-  source_endpoint_arn      = aws_dms_endpoint.mysql_source.endpoint_arn
-  target_endpoint_arn      = aws_dms_endpoint.mysql_target.endpoint_arn
-  replication_instance_arn = aws_dms_replication_instance.dms_instance.replication_instance_arn
-  table_mappings = jsonencode({
-    "rules" : [
-      {
-        "rule-type" : "selection",
-        "rule-id" : "1",
-        "rule-name" : "1",
-        "object-locator" : {
-          "schema-name" : "your_schema_name",
-          "table-name" : "table1"
-        },
-        "rule-action" : "include"
-      },
-      {
-        "rule-type" : "selection",
-        "rule-id" : "2",
-        "rule-name" : "2",
-        "object-locator" : {
-          "schema-name" : "your_schema_name",
-          "table-name" : "table2"
-        },
-        "rule-action" : "include"
-      },
-      # Continue for other tables
-    ]
-  })
+  replication_task_id       = "dms-mysql-replication-task"
+  replication_instance_arn  = aws_dms_replication_instance.dms_instance.replication_instance_arn  
+  source_endpoint_arn       = aws_dms_endpoint.mysql_source.endpoint_arn
+  target_endpoint_arn       = aws_dms_endpoint.mysql_target.endpoint_arn
+  migration_type            = "full-load-and-cdc"     # full-load | cdc | full-load-and-cdc
+  table_mappings            = file("/table_mappings.json")
+  replication_task_settings = file("/replication_task_settings.json")
+  cdc_start_time            = "1993-05-21T05:50:00Z"
 }
 
 
