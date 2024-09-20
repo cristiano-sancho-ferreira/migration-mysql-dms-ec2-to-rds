@@ -25,6 +25,8 @@ https://docs.aws.amazon.com/dms/latest/userguide/fa-data-collectors-create.html
 
 https://youtu.be/2UmTXVIlDLw  
 
+https://www.youtube.com/watch?v=H_25R8my7-4&t=1007s
+
 
 
 
@@ -36,21 +38,14 @@ https://www.youtube.com/watch?v=3v3Q7WVbsT4&t=3s
 
 
 
-sudo apt update -y
-sudo apt install mysql-server -y
-sudo systemctl enable mysql
-sudo systemctl start mysql
-sudo systemctl status mysql
-sudo mysql
+
 
 
 Commands Used,
 sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
-
-create user 'virtualadmin'@'%' identified by 'calipso';
-grant all on *.* to 'virtualadmin'@'%';
-mysql -u virtualadmin -p
 sudo systemctl restart mysql
+
+
 
 no DBeaver 
 allowPublicKeyRetrieval=true

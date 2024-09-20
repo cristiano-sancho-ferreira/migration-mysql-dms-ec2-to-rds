@@ -53,8 +53,9 @@ resource "aws_s3_bucket" "dms_bucket" {
 resource "aws_dms_replication_instance" "dms_instance" {
   replication_instance_id    = "dms-replication-instance"
   replication_instance_class = "dms.t2.micro"
-  engine_version             = var.engine_version
+  engine_version             = "3.5.2"
   multi_az                   = false
+  availability_zone          = "us-east-1a"
   allocated_storage          = 5
   apply_immediately          = true
   publicly_accessible        = true
@@ -98,6 +99,7 @@ resource "aws_instance" "ec2_mysql" {
   instance_type   = var.instance_type
   key_name        = var.key_name
   security_groups = [aws_security_group.ec2_sg.name]
+  subnet_id       = var.subnet_ids
 
   user_data = <<-EOF
               #!/bin/bash
@@ -124,13 +126,13 @@ resource "aws_instance" "ec2_mysql" {
 
 #######################################################
 ###################### RDS MySql ######################
-/*
+
 resource "aws_db_subnet_group" "mysql_subnet_group" {
   name       = "mysql-subnet-group"
-  subnet_ids = var.subnet_ids  # Substitua pelos IDs de subnets corretos
+  subnet_ids = [var.subnet_ids, "subnet-09485a295a6a6d9c4"] # Substitua pelos IDs de subnets corretos
 
   tags = var.common_tags
-}*/
+}
 
 resource "aws_security_group" "mysql_sg" {
   name        = "dms-mysql-sg"
@@ -154,19 +156,21 @@ resource "aws_security_group" "mysql_sg" {
 }
 
 resource "aws_db_instance" "mysql" {
-  allocated_storage = 20
-  identifier        = "mysql-instance"
-  engine            = "mysql"
-  engine_version    = var.engine_version
-  instance_class    = var.instance_class
-  db_name           = var.db_name_rds
-  username          = var.username_rds
-  password          = var.password_rds
-  #db_subnet_group_name    = aws_db_subnet_group.mysql_subnet_group.name
+  allocated_storage      = 20
+  identifier             = "mysql-instance"
+  engine                 = "mysql"
+  engine_version         = var.engine_version
+  instance_class         = var.instance_class
+  db_name                = var.db_name_rds
+  username               = var.username_rds
+  password               = var.password_rds
+  db_subnet_group_name   = aws_db_subnet_group.mysql_subnet_group.name
   vpc_security_group_ids = [aws_security_group.mysql_sg.id]
   skip_final_snapshot    = true
   publicly_accessible    = true
   multi_az               = false
+  network_type           = "IPV4"
+  availability_zone          = "us-east-1a"
 
   tags = var.common_tags
 }
@@ -189,7 +193,7 @@ resource "aws_dms_endpoint" "mysql_source" {
 
 resource "aws_dms_endpoint" "mysql_target" {
   endpoint_id   = "rds-mysql-target-endpoint"
-  endpoint_type = "source"
+  endpoint_type = "target"
   engine_name   = "mysql"
   username      = aws_db_instance.mysql.username
   password      = aws_db_instance.mysql.password
@@ -200,34 +204,34 @@ resource "aws_dms_endpoint" "mysql_target" {
 }
 
 
-/*
+
 resource "aws_dms_replication_task" "dms_task" {
-  replication_task_id          = "mysql-to-s3"
-  migration_type               = "cdc"  # CDC for streaming
-  source_endpoint_arn          = aws_dms_endpoint.mysql_source.endpoint_arn
-  target_endpoint_arn          = aws_dms_endpoint.s3_target.endpoint_arn
-  replication_instance_arn     = aws_dms_replication_instance.dms_instance.replication_instance_arn
-  table_mappings               = jsonencode({
-    "rules": [
+  replication_task_id      = "mysql-to-s3"
+  migration_type           = "cdc" # CDC for streaming
+  source_endpoint_arn      = aws_dms_endpoint.mysql_source.endpoint_arn
+  target_endpoint_arn      = aws_dms_endpoint.mysql_target.endpoint_arn
+  replication_instance_arn = aws_dms_replication_instance.dms_instance.replication_instance_arn
+  table_mappings = jsonencode({
+    "rules" : [
       {
-        "rule-type": "selection",
-        "rule-id": "1",
-        "rule-name": "1",
-        "object-locator": {
-          "schema-name": "your_schema_name",
-          "table-name": "table1"
+        "rule-type" : "selection",
+        "rule-id" : "1",
+        "rule-name" : "1",
+        "object-locator" : {
+          "schema-name" : "your_schema_name",
+          "table-name" : "table1"
         },
-        "rule-action": "include"
+        "rule-action" : "include"
       },
       {
-        "rule-type": "selection",
-        "rule-id": "2",
-        "rule-name": "2",
-        "object-locator": {
-          "schema-name": "your_schema_name",
-          "table-name": "table2"
+        "rule-type" : "selection",
+        "rule-id" : "2",
+        "rule-name" : "2",
+        "object-locator" : {
+          "schema-name" : "your_schema_name",
+          "table-name" : "table2"
         },
-        "rule-action": "include"
+        "rule-action" : "include"
       },
       # Continue for other tables
     ]
@@ -235,7 +239,7 @@ resource "aws_dms_replication_task" "dms_task" {
 }
 
 
-*/
+
 
 
 

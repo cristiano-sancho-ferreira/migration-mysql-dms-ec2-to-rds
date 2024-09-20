@@ -1,0 +1,34 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - "apt install unzip -y"
+      - "wget https://releases.hashicorp.com/terraform/1.5.2/terraform_1.5.2_linux_amd64.zip"
+      - "unzip terraform_1.5.2_linux_amd64.zip"
+      - "mv terraform /usr/local/bin/"
+      - "pwd"
+      #- "wget https://repo1.maven.org/maven2/io/delta/delta-core_2.12/1.0.0/delta-core_2.12-1.0.0.jar"
+      #- "aws s3 cp delta-core_2.12-1.0.0.jar s3://sancho-sdlf-prd-us-east-1-381491840841-artifactory/glue/jobs/heavy_transformation/script/"
+
+  pre_build:
+    commands:
+      - #cd sdlf-stagea-infra
+      #- terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/sdlf-infra/terraform.tfstate"
+      #- cd sdlf-stageb-iceberg
+      #- terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/sdlf-iceberg/terraform.tfstate"
+      #- cd sdlf-stagec-redshift
+      #- terraform init -backend-config="region=us-east-1" -backend-config="bucket=sancho-terraform-state" -backend-config="key=state/aws/sdlf/sdlf-redshift/terraform.tfstate"
+
+  build:
+    commands:
+      - "pwd"
+      - terraform fmt --recursive
+      - terraform apply -auto-approve -var-file="./_variables/prd.tfvars"
+      #- terraform destroy -auto-approve -var-file="./_variables/prd.tfvars"
+      
+  post_build:
+    commands:
+      - echo Terraform completed on `date`
+
+      
