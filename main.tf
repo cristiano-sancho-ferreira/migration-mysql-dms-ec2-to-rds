@@ -227,8 +227,8 @@ resource "aws_dms_replication_task" "dms_task" {
   target_endpoint_arn       = aws_dms_s3_endpoint.s3_target.endpoint_arn
   #target_endpoint_arn       = aws_dms_endpoint.mysql_target.endpoint_arn
   migration_type            = "full-load-and-cdc"     # full-load | cdc | full-load-and-cdc
-  table_mappings            = file("/table_mappings.json")
-  replication_task_settings = file("/replication_task_settings.json")
+  table_mappings            = file("table_mappings.json")
+  replication_task_settings = file("replication_task_settings.json")
   cdc_start_time            = "1993-05-21T05:50:00Z"
 }
 
