@@ -206,17 +206,15 @@ resource "aws_dms_endpoint" "mysql_source" {
 #   ssl_mode      = "none"
 # }
 
-# resource "aws_dms_s3_endpoint" "s3_target" {
-#   endpoint_id             = "dms-mysql-target-s3"
-#   endpoint_type           = "target"
-#   bucket_name             = aws_s3_bucket.dms_bucket.id
-#   service_access_role_arn = aws_iam_role.dms_role.arn
-
-#   csv_delimiter                               = ";"
-  
-#   ssl_mode      = "none"
-
-# }
+resource "aws_dms_s3_endpoint" "s3_target" {
+  endpoint_id             = "dms-mysql-target-s3"
+  endpoint_type           = "target"
+  bucket_name             = aws_s3_bucket.dms_bucket.id
+  service_access_role_arn = aws_iam_role.dms_role.arn
+  data_format             = "csv"
+  csv_delimiter           = "|"  
+  ssl_mode      = "none"
+}
 
 
 #######################################################
@@ -226,7 +224,8 @@ resource "aws_dms_replication_task" "dms_task" {
   replication_task_id       = "dms-mysql-replication-task"
   replication_instance_arn  = aws_dms_replication_instance.dms_instance.replication_instance_arn  
   source_endpoint_arn       = aws_dms_endpoint.mysql_source.endpoint_arn
-  target_endpoint_arn       = aws_dms_endpoint.mysql_target.endpoint_arn
+  target_endpoint_arn       = aws_dms_s3_endpoint.s3_target.endpoint_arn
+  #target_endpoint_arn       = aws_dms_endpoint.mysql_target.endpoint_arn
   migration_type            = "full-load-and-cdc"     # full-load | cdc | full-load-and-cdc
   table_mappings            = file("/table_mappings.json")
   replication_task_settings = file("/replication_task_settings.json")
