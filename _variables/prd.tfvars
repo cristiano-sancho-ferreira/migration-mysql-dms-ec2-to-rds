@@ -19,5 +19,5 @@ key_name      = "key-pair-linux-sancho"
 ami           = "ami-0a0e5d9c7acc336f1" # AMI do ubuntu
 instance_type = "t2.micro"
 vpc_id        = "vpc-039ffaa0cf5d4c063"
-subnet_ids    = "subnet-0941dc7c512bbba8d"
+subnet_ids    = "subnet-040ea23210a899856"
 

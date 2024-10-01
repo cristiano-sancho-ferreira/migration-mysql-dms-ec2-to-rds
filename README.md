@@ -74,3 +74,27 @@ Fonte: Migrate On Premise MySQL to RDS | AWS Database Migration Service | On Pre
 
     No DBeaver 
     - allowPublicKeyRetrieval=true
+
+
+
+
+### Criação OpenSearch e endpoint DMS
+
+* AWS Migration | Migration from Mysql to Elastisearch - https://www.youtube.com/watch?v=DIKBJI3WK6Q
+    https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.Elasticsearch.html
+    https://aws.amazon.com/pt/blogs/database/introducing-amazon-elasticsearch-service-as-a-target-in-aws-database-migration-service/
+    https://www.jeremydaly.com/access-aws-vpc-based-elasticsearch-cluster-locally/
+
+
+
+* Como implementar um ambiente de Observabilidade na AWS - https://play.vidyard.com/R3TXKZyFMqoQE18212MaM7: Fala sobre Observabilidade, 
+
+* SkillBuilder - https://explore.skillbuilder.aws/learn/course/15921/play/138754/aws-partnercast-amazon-opensearch-service-session-1-of-3-opensearch-introduction-technical
+
+
+
+* AWS OpenSearch Quick Start Guide from Scratch | Free Tier Tutorial - https://www.youtube.com/watch?v=uTlH0IXyHvY: Iniciar um cluster OpenSearch On-Demand Hands-on
+
+
+
+https://docs.aws.amazon.com/pt_br/opensearch-service/latest/developerguide/gsg.html

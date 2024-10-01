@@ -15,13 +15,13 @@ data "aws_iam_policy_document" "dms_assume_role" {
   }
 }
 
-resource "aws_iam_role" "dms_role" {
-  name               = "dms-mysql-s3-access-role"
+resource "aws_iam_role" "dms_s3_role" {
+  name               = "dms-mysql-s3-role"
   assume_role_policy = data.aws_iam_policy_document.dms_assume_role.json
 }
 
-resource "aws_iam_policy" "dms_policy" {
-  name        = "dms-mysql-s3-access-Policy"
+resource "aws_iam_policy" "dms_s3_policy" {
+  name        = "dms-mysql-s3-policy"
   description = "Allow DMS to put objects in S3 bucket"
   policy = jsonencode({
     Version = "2012-10-17"
@@ -41,9 +41,9 @@ resource "aws_iam_policy" "dms_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "dms_role_policy_attach" {
-  role       = aws_iam_role.dms_role.name
-  policy_arn = aws_iam_policy.dms_policy.arn
+resource "aws_iam_role_policy_attachment" "dms_role_policy_dms_s3_attach" {
+  role       = aws_iam_role.dms_s3_role.name
+  policy_arn = aws_iam_policy.dms_s3_policy.arn
 }
 
 resource "aws_s3_bucket" "dms_bucket" {
@@ -85,7 +85,14 @@ resource "aws_security_group" "ec2_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Permite acesso ao MySQL
+    cidr_blocks = ["0.0.0.0/0"] 
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
   egress {
@@ -210,7 +217,7 @@ resource "aws_dms_s3_endpoint" "s3_target" {
   endpoint_id             = "dms-mysql-target-s3"
   endpoint_type           = "target"
   bucket_name             = aws_s3_bucket.dms_bucket.id
-  service_access_role_arn = aws_iam_role.dms_role.arn
+  service_access_role_arn = aws_iam_role.dms_s3_role.arn
   data_format             = "csv"
   csv_delimiter           = "|"  
   ssl_mode      = "none"
@@ -358,3 +365,181 @@ resource "aws_iam_service_linked_role" "fleet_advisor_slr" {
 
 
 # aws dms create-fleet-advisor-collector --collector-name "MyFleetAdvisorCollector" --s3-bucket-name "migration-dms-data-colletor-381491840841" --service-access-role-arn "arn:aws:iam::381491840841:role/FleetAdvisorCollectorRole"
+
+##################### DMS OpenSearch #####################
+
+# resource "aws_iam_role" "dms_opensearch_role" {
+#   name               = "dms-mysql-opensearch-role"
+#   assume_role_policy = data.aws_iam_policy_document.dms_assume_role.json
+# }
+
+# resource "aws_iam_policy" "dms_opensearch_policy" {
+#   name        = "dms-mysql-opensearch-policy"
+#   description = "Allow DMS to put objects in OpenSearch"
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [{
+#       Action = [
+#             "es:ESHttpDelete",
+#             "es:ESHttpGet",  
+#             "es:ESHttpHead",
+#             "es:ESHttpPost",
+#             "es:ESHttpPut"
+#       ]
+#       Effect = "Allow"
+#       Resource = [
+#         "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+#       ]
+#     }]
+#   })
+# }
+
+# resource "aws_iam_role_policy_attachment" "dms_role_policy_dms_es_attach" {
+#   role       = aws_iam_role.dms_opensearch_role.name
+#   policy_arn = aws_iam_policy.dms_opensearch_policy.arn
+# }
+
+# ##################### Amazon OpenSearch #####################
+
+
+# resource "aws_security_group" "opensearch_security_group" {
+#   name   = "opensearch-sg"
+#   vpc_id = "vpc-039ffaa0cf5d4c063"
+
+#   ingress {
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
+
+
+# resource "aws_opensearch_domain" "opensearch_domain" {
+#   domain_name           = "dms-opensearch-cluster"
+#   engine_version        = "OpenSearch_2.15"
+
+#   cluster_config {
+#     instance_type  = "t3.small.search" 
+#     instance_count = 1  
+#     zone_awareness_enabled = true
+#     zone_awareness_config {
+#       availability_zone_count = 1
+#     }
+#   }
+  
+#   ebs_options {
+#     ebs_enabled = true
+#     volume_size = 10  
+#     volume_type = "gp2"
+#   }
+
+#   access_policies = jsonencode({
+#     "Version": "2012-10-17",
+#     "Statement": [{
+#       "Effect": "Allow",
+#       "Principal": { "AWS": "*" },
+#       "Action":   "es:*",
+#       "Resource": "${aws_opensearch_domain.opensearch_domain.arn}/*",
+#       "Condition": {
+#         "IpAddress": {
+#           "aws:SourceIp": "0.0.0.0/0"
+#         }
+#       }
+#     }]
+#   })
+
+#   vpc_options {
+#     subnet_ids         = ["subnet-0941dc7c512bbba8d"]
+#     security_group_ids = [aws_security_group.opensearch_security_group.id]
+#   }
+
+#   advanced_security_options {
+#     enabled                        = true
+#     anonymous_auth_enabled         = true
+#     internal_user_database_enabled = true
+#     master_user_options {
+#       master_user_name   = "admin"
+#       master_user_password = "Calipso@2024"
+#     }
+#   }
+
+#   encrypt_at_rest {
+#     enabled = true
+#   }
+
+#   node_to_node_encryption {
+#     enabled = true
+#   }
+
+#   domain_endpoint_options {
+#     enforce_https       = true
+#     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+#   }
+
+#   tags = {
+#     Name = "my-opensearch-domain"
+#     Environment = "production"
+#   }
+# }
+
+
+
+
+# resource "aws_opensearch_domain" "opensearch_domain" {
+#   # ... outras configurações
+
+#   log_publishing_options {
+#     cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_application_logs.arn
+#     log_type                 = "INDEX_SLOW_LOGS"
+#     enabled                  = true
+#   }
+
+#   log_publishing_options {
+#     cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_search_logs.arn
+#     log_type                 = "SEARCH_SLOW_LOGS"
+#     enabled                  = true
+#   }
+# }
+
+# resource "aws_cloudwatch_log_group" "opensearch_application_logs" {
+#   name = "opensearch-application-logs"
+#   retention_in_days = 14
+# }
+
+# resource "aws_cloudwatch_log_group" "opensearch_search_logs" {
+#   name = "opensearch-search-logs"
+#   retention_in_days = 14
+# }
+
+
+
+
+
+
+
+
+
+
+
+# resource "aws_dms_endpoint" "opensearch_target" {
+#   endpoint_id               = "opensearch-destination-endpoint"
+#   endpoint_type             = "target"
+#   engine_name               = "elasticsearch"  # O DMS ainda utiliza esse nome para OpenSearch
+#   username                  = "opensearch_user"
+#   password                  = "opensearch_password"
+#   server_name               = "vpc-opensearch-cluster.example.com"
+#   port                      = 443
+#   ssl_mode                  = "require"
+
+#   elasticsearch_settings {
+#     service_access_role_arn = aws_iam_role.dms_opensearch_role.arn
+#   }
+# }
