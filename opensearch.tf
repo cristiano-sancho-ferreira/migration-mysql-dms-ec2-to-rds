@@ -26,7 +26,7 @@ resource "aws_opensearch_domain" "opensearch_domain" {
 
   vpc_options {
     subnet_ids         = [var.subnet_ids]
-    security_group_ids = [aws_security_group.ec2_sg.id]
+    security_group_ids = [aws_security_group.opensearch_sg.id]
   }
 
   advanced_security_options {
@@ -138,8 +138,8 @@ CONFIG
 
 
 
-resource "aws_security_group" "_sg" {
-  name        = "dms-mysql-ec2-sg"
+resource "aws_security_group" "opensearch_sg" {
+  name        = "dms-opensearch-sg"
   description = "Allow MySQL access"
 
   ingress {
