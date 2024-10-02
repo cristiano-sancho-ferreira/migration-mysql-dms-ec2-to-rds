@@ -84,6 +84,8 @@ resource "aws_dms_s3_endpoint" "s3_target" {
   data_format             = "csv"
   csv_delimiter           = "|"  
   ssl_mode                = "none"
+
+  depends_on = [ aws_s3_bucket.dms_bucket, aws_dms_replication_instance.dms_instance ]
 }
 
 

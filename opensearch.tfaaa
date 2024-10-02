@@ -5,6 +5,9 @@
 # AWS OpenSearch | Creating an OpenSearch domain within a VPC and accessing it using Proxy API 
 # https://www.youtube.com/watch?v=LkLMfGFp-mY
 
+
+# https://aws.amazon.com/pt/blogs/big-data/introducing-terraform-support-for-amazon-opensearch-ingestion/
+
 # ##################### Amazon OpenSearch #####################
 
 resource "aws_opensearch_domain" "opensearch_domain" {
@@ -13,8 +16,8 @@ resource "aws_opensearch_domain" "opensearch_domain" {
 
   cluster_config {
     instance_type            = "t3.small.search"  # Nó de dados
-    instance_count           = 1
-    dedicated_master_enabled = false
+    #instance_count           = 1
+    #dedicated_master_enabled = false
     # dedicated_master_count   = 1 #var.dedicated_master_count
     # dedicated_master_type    = "t3.small.search" #var.dedicated_master_type
     # zone_awareness_enabled   = false 
@@ -24,20 +27,26 @@ resource "aws_opensearch_domain" "opensearch_domain" {
     # }
   } 
 
-  vpc_options {
-    subnet_ids         = [var.subnet_ids]
-    security_group_ids = [aws_security_group.opensearch_sg.id]
-  }
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 10  
+    volume_type = "gp3"
+  } 
 
-  advanced_security_options {
-    enabled                        = true
-    # anonymous_auth_enabled         = false
-    internal_user_database_enabled = true
-    master_user_options {
-      master_user_name   = "admin"
-      master_user_password = "Calipso@2024"
-    }
-  }
+  # vpc_options {
+  #   subnet_ids         = [var.subnet_ids]
+  #   security_group_ids = [aws_security_group.opensearch_sg.id]
+  # }
+
+  # advanced_security_options {
+  #   enabled                        = true
+  #   # anonymous_auth_enabled         = false
+  #   internal_user_database_enabled = false
+  #   # master_user_options {
+  #   #   master_user_name   = "admin"
+  #   #   master_user_password = "Calipso@2024"
+  #   # }
+  # }
   
   encrypt_at_rest {
     enabled = true
@@ -52,13 +61,7 @@ resource "aws_opensearch_domain" "opensearch_domain" {
     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
   }
 
-  ebs_options {
-    ebs_enabled = true
-    volume_size = 10  
-    volume_type = "gp3"
-  } 
-
-    access_policies = <<CONFIG
+  access_policies = <<CONFIG
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -84,62 +87,8 @@ CONFIG
 
 
 
-# resource "aws_opensearch_domain" "opensearch_domain" {
-#   # ... outras configurações
-
-#   log_publishing_options {
-#     cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_application_logs.arn
-#     log_type                 = "INDEX_SLOW_LOGS"
-#     enabled                  = true
-#   }
-
-#   log_publishing_options {
-#     cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_search_logs.arn
-#     log_type                 = "SEARCH_SLOW_LOGS"
-#     enabled                  = true
-#   }
-# }
-
-# resource "aws_cloudwatch_log_group" "opensearch_application_logs" {
-#   name = "opensearch-application-logs"
-#   retention_in_days = 14
-# }
-
-# resource "aws_cloudwatch_log_group" "opensearch_search_logs" {
-#   name = "opensearch-search-logs"
-#   retention_in_days = 14
-# }
-
-
-
-
-
-
-
-
-
-
-
-# resource "aws_dms_endpoint" "opensearch_target" {
-#   endpoint_id               = "opensearch-destination-endpoint"
-#   endpoint_type             = "target"
-#   engine_name               = "elasticsearch"  # O DMS ainda utiliza esse nome para OpenSearch
-#   username                  = "opensearch_user"
-#   password                  = "opensearch_password"
-#   server_name               = "vpc-opensearch-cluster.example.com"
-#   port                      = 443
-#   ssl_mode                  = "require"
-
-#   elasticsearch_settings {
-#     service_access_role_arn = aws_iam_role.dms_opensearch_role.arn
-#   }
-# }
-
-
-
-
 resource "aws_security_group" "opensearch_sg" {
-  name        = "dms-opensearch-sg"
+  name        = "opensearch-sg"
   description = "Allow MySQL access"
 
   ingress {
