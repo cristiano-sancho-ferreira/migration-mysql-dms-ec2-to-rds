@@ -3,11 +3,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.35.0"
+      version = "5.70.0"
     }
   }
   backend "s3" {
-    bucket = "sancho-terraform-state"
+    bucket = "cacaushow-terraform-state"
     key    = "state/aws/sdlf/streams/terraform.tfstate"
     region = "us-east-1"
   }

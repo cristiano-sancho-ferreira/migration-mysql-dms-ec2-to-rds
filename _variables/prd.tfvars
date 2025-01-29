@@ -1,5 +1,5 @@
 region            = "us-east-1"
-organization_name = "beholder"
+organization_name = "cacaushow"
 environment       = "prd"
 common_tags = {
   "Name" = "Migration"
@@ -15,9 +15,11 @@ username_ec2  = "virtualadmin"
 password_ec2  = "calipso"
 port_ec2      = "3306"
 db_name_ec2   = "retail"
-key_name      = "key-pair-linux-sancho"
-ami           = "ami-0a0e5d9c7acc336f1" # AMI do ubuntu
+key_name      = "dms-mysql-key"
+ami           = "ami-0866a3c8686eaeeba" # AMI do ubuntu
 instance_type = "t2.micro"
-vpc_id        = "vpc-039ffaa0cf5d4c063"
-subnet_ids    = "subnet-040ea23210a899856"
+
+
+vpc_id        = "vpc-0512e5889e2a04da7"
+subnet_ids    = "subnet-08b756f575d8975b9"  
 
